@@ -29,7 +29,19 @@
     button:hover { background: var(--accent-hover); }
 
     /* Campo da Gioco */
-    .field-container { background: var(--field-green); border: 4px solid #fff; border-radius: 10px; height: 600px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 10px; }
+    .field-container {
+      background: var(--field-green);
+      border: 4px solid #fff;
+      border-radius: 10px;
+      min-height: 600px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding: 20px 10px;
+      gap: 10px;
+    }
     .field-line-center { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: var(--field-line); }
     .field-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 2px solid var(--field-line); border-radius: 50%; }
 
@@ -205,8 +217,25 @@
     const BENCH_SIZE = 7;
 
     window.onload = () => {
+      const saved = loadState();
       renderBench();
-      updateMode();
+
+      if (saved) {
+        document.getElementById('mode-select').value = saved.mode;
+        updateMode();
+        document.getElementById('formation-select').value = saved.formation;
+        changeFormation();
+
+        document.querySelectorAll('.starter-input').forEach(input => {
+          if (saved.starters[input.dataset.id]) input.value = saved.starters[input.dataset.id];
+        });
+        document.querySelectorAll('.bench-input').forEach(input => {
+          if (saved.bench[input.id]) input.value = saved.bench[input.id];
+        });
+        updateSubDropdowns();
+      } else {
+        updateMode();
+      }
     };
 
     // Cambia la modalità (5, 7, 8, 11) e ripopola la select dei moduli
@@ -235,6 +264,9 @@
       const field = document.getElementById('field');
 
       if (!layout) return;
+
+      // Adatta il padding in base al numero di righe (moduli con più linee)
+      field.style.padding = layout.length >= 5 ? '12px 10px' : '20px 10px';
 
       // Preserva i nomi già inseriti
       const existingNames = {};
@@ -323,6 +355,8 @@
 
       if (currentOut) outSelect.value = currentOut;
       if (currentIn) inSelect.value = currentIn;
+
+      saveState();
     }
 
     function makeSubstitution() {
@@ -340,7 +374,33 @@
 
       updateSubDropdowns();
     }
+
+    // Persistenza dati con localStorage
+    function saveState() {
+      const state = {
+        mode: document.getElementById('mode-select').value,
+        formation: document.getElementById('formation-select').value,
+        starters: {},
+        bench: {}
+      };
+      document.querySelectorAll('.starter-input').forEach(input => {
+        state.starters[input.dataset.id] = input.value;
+      });
+      document.querySelectorAll('.bench-input').forEach(input => {
+        state.bench[input.id] = input.value;
+      });
+      localStorage.setItem('formationState', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('formationState');
+      if (!saved) return null;
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
   </script>
 </body>
 </html>
-
